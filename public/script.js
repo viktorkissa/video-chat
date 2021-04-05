@@ -6,6 +6,7 @@ const myPeer = new Peer(undefined, {
 })
 const myVideo = document.createElement('video')
 myVideo.muted = true
+const peers = {}
 
 navigator.mediaDevices.getUserMedia({
 				video: true,
@@ -15,11 +16,19 @@ navigator.mediaDevices.getUserMedia({
 
 				myPeer.on('call', call => {
 								call.answer(stream)
+								const video = document.createElement('video')
+								call.on('stream', userVideoStream => {
+												addVideoStream(video, userVideoStream)
+								})
 				})
 
 				socket.on('user-connected', userId => {
 								connectToNewUser(userId, stream)
 				})
+})
+
+socket.on('user-disconnect', userId => {
+				if (peers[userId]) peers[userId].close()
 })
 
 myPeer.on('open', id => {
@@ -43,4 +52,6 @@ function connectToNewUser(userId, stream) {
 				call.on('close', () => {
 								video.remove()
 				})
+
+				peers[userId] = call
 }
